@@ -19,20 +19,26 @@ class Method_CNN_MNIST(method, nn.Module):
         nn.Module.__init__(self)
 
         # block 1: (N, 1, 28, 28) -> (N, 8, 26, 26) -> pool -> (N, 8, 13, 13)
-        self.conv_1 = nn.Conv2d(1, 8, kernel_size=3)
+        self.conv_1 = nn.Conv2d(1, 16, kernel_size=5)
         self.relu_1 = nn.ReLU()
         self.pool_1 = nn.MaxPool2d(kernel_size=2)
 
-        # flatten: (N, 8, 13, 13) -> (N, 1352)
+        # block 2: (N, 8, 13, 13) -> (N, 16, 11, 11) -> pool -> (N, 16, 5, 5)
+        self.conv_2 = nn.Conv2d(16, 32, kernel_size=5)
+        self.relu_2 = nn.ReLU()
+        self.pool_2 = nn.MaxPool2d(kernel_size=2)
+
+        # flatten: (N, 16, 5, 5) -> (N, 400)
         self.flatten = nn.Flatten()
 
-        # output layer: (N, 1352) -> (N, 10)
-        self.fc_layer = nn.Linear(1352, 10)
+        # output layer: (N, 512) -> (N, 10)
+        self.fc_layer = nn.Linear(512, 10)
 
     def forward(self, x):
         h = self.pool_1(self.relu_1(self.conv_1(x)))
+        h = self.pool_2(self.relu_2(self.conv_2(h)))
         h = self.flatten(h)
-        return self.fc_layer(h)   # raw scores, no softmax
+        return self.fc_layer(h)  # raw scores, no softmax
 
     def train(self, X, y):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
